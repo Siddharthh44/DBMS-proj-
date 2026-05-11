@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Customers | Garage System{% endblock %}
+{% block page_title %}Customer Management{% endblock %}
+{% block page_subtitle %}Add, review, and update customer records stored in MySQL.{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-xl-4">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="h5 fw-bold mb-0">{% if edit_customer %}Edit Customer{% else %}Add Customer{% endif %}</h3>
+                {% if edit_customer %}
+                    <a href="{{ url_for('customers') }}" class="btn btn-outline-secondary btn-sm rounded-pill">Cancel</a>
+                {% endif %}
+            </div>
+
+            {% if current_user.role in write_roles %}
+                <form method="POST" action="{% if edit_customer %}{{ url_for('update_customer', customer_id=edit_customer.customer_id) }}{% else %}{{ url_for('customers') }}{% endif %}">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Full Name</label>
+                        <input type="text" name="full_name" class="form-control rounded-4" required value="{{ edit_customer.full_name if edit_customer else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Phone</label>
+                        <input type="text" name="phone" class="form-control rounded-4" required value="{{ edit_customer.phone if edit_customer else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email</label>
+                        <input type="email" name="email" class="form-control rounded-4" value="{{ edit_customer.email if edit_customer else '' }}">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Address</label>
+                        <textarea name="address" class="form-control rounded-4" rows="4">{{ edit_customer.address if edit_customer else '' }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-dark rounded-4 w-100">{% if edit_customer %}Update Customer{% else %}Save Customer{% endif %}</button>
+                </form>
+            {% else %}
+                <div class="alert alert-info rounded-4 mb-0">
+                    Your role can view customer records but cannot create or edit them.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-xl-8">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="h5 fw-bold mb-0">Customer Directory</h3>
+                <span class="badge text-bg-primary rounded-pill px-3 py-2">{{ customers|length }} customers</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Vehicles</th>
+                            <th>Address</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                            <tr>
+                                <td class="fw-semibold">{{ customer.full_name }}</td>
+                                <td>{{ customer.phone }}</td>
+                                <td>{{ customer.email or '-' }}</td>
+                                <td>{{ customer.vehicle_count }}</td>
+                                <td>{{ customer.address or '-' }}</td>
+                                <td class="text-end">
+                                    {% if current_user.role in write_roles %}
+                                        <a href="{{ url_for('customers', edit=customer.customer_id) }}" class="btn btn-outline-dark btn-sm rounded-pill">Edit</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No customers found.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

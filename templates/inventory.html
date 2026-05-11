@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory | Garage System{% endblock %}
+{% block page_title %}Inventory Management{% endblock %}
+{% block page_subtitle %}Track suppliers, spare parts, stock levels, and reorder alerts.{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-xl-4">
+        <div class="content-card h-100">
+            <h3 class="h5 fw-bold mb-3">Add Supplier</h3>
+            {% if current_user.role in inventory_roles %}
+                <form method="POST">
+                    <input type="hidden" name="form_type" value="supplier">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Supplier Name</label>
+                        <input type="text" name="supplier_name" class="form-control rounded-4" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Contact Person</label>
+                        <input type="text" name="contact_person" class="form-control rounded-4">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Phone</label>
+                        <input type="text" name="phone" class="form-control rounded-4">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Email</label>
+                        <input type="email" name="email" class="form-control rounded-4">
+                    </div>
+                    <button type="submit" class="btn btn-dark rounded-4 w-100">Save Supplier</button>
+                </form>
+            {% else %}
+                <div class="alert alert-info rounded-4 mb-0">
+                    Your role can view inventory but cannot change supplier or stock data.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-xl-8">
+        <div class="content-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="h5 fw-bold mb-0">Low Stock Alerts</h3>
+                <span class="badge text-bg-danger rounded-pill px-3 py-2">{{ low_stock_parts|length }}</span>
+            </div>
+            <div class="row g-3">
+                {% for part in low_stock_parts %}
+                    <div class="col-md-6">
+                        <div class="low-stock-item h-100">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h4 class="h6 fw-bold mb-1">{{ part.part_name }}</h4>
+                                <span class="badge text-bg-danger">Stock {{ part.quantity_in_stock }}</span>
+                            </div>
+                            <p class="text-muted mb-1">{{ part.category }} | {{ part.part_number }}</p>
+                            <p class="mb-0">Reorder level: {{ part.reorder_level }}</p>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="col-12 text-center text-muted py-5">
+                        No low stock alerts right now.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-5">
+        <div class="content-card">
+            <h3 class="h5 fw-bold mb-3">Add Spare Part</h3>
+            {% if current_user.role in inventory_roles %}
+                <form method="POST">
+                    <input type="hidden" name="form_type" value="part">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Supplier</label>
+                        <select name="supplier_id" class="form-select rounded-4" required>
+                            <option value="">Select supplier</option>
+                            {% for supplier in suppliers %}
+                                <option value="{{ supplier.supplier_id }}">{{ supplier.supplier_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Part Name</label>
+                            <input type="text" name="part_name" class="form-control rounded-4" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Part Number</label>
+                            <input type="text" name="part_number" class="form-control rounded-4" required>
+                        </div>
+                    </div>
+                    <div class="mb-3 mt-3">
+                        <label class="form-label fw-semibold">Category</label>
+                        <input type="text" name="category" class="form-control rounded-4" required>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Quantity in Stock</label>
+                            <input type="number" name="quantity_in_stock" class="form-control rounded-4" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Reorder Level</label>
+                            <input type="number" name="reorder_level" class="form-control rounded-4" required>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Unit Cost</label>
+                            <input type="number" step="0.01" name="unit_cost" class="form-control rounded-4" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Selling Price</label>
+                            <input type="number" step="0.01" name="selling_price" class="form-control rounded-4" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-dark rounded-4 w-100 mt-4">Save Spare Part</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-xl-7">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="h5 fw-bold mb-0">Spare Parts Stock</h3>
+                <span class="badge text-bg-primary rounded-pill px-3 py-2">{{ parts|length }} parts</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Part</th>
+                            <th>Supplier</th>
+                            <th>Pricing</th>
+                            <th>Stock</th>
+                            <th>Alert</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for part in parts %}
+                            <tr class="{% if part.is_low_stock %}table-warning{% endif %}">
+                                <td>
+                                    <div class="fw-semibold">{{ part.part_name }}</div>
+                                    <div class="small text-muted">{{ part.part_number }} | {{ part.category }}</div>
+                                </td>
+                                <td>{{ part.supplier_name }}</td>
+                                <td>
+                                    <div class="small">Cost: {{ part.unit_cost | currency }}</div>
+                                    <div class="small">Sell: {{ part.selling_price | currency }}</div>
+                                </td>
+                                <td>
+                                    {% if current_user.role in inventory_roles %}
+                                        <form method="POST" action="{{ url_for('update_stock', part_id=part.part_id) }}" class="d-flex gap-2 align-items-center flex-wrap">
+                                            <input type="number" name="quantity_in_stock" class="form-control form-control-sm rounded-3 stock-input" value="{{ part.quantity_in_stock }}" required>
+                                            <input type="number" name="reorder_level" class="form-control form-control-sm rounded-3 stock-input" value="{{ part.reorder_level }}" required>
+                                            <button type="submit" class="btn btn-outline-dark btn-sm rounded-pill">Update</button>
+                                        </form>
+                                    {% else %}
+                                        <span class="fw-semibold">{{ part.quantity_in_stock }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if part.is_low_stock %}
+                                        <span class="badge text-bg-danger">Low Stock</span>
+                                    {% else %}
+                                        <span class="badge text-bg-success">Healthy</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">No spare parts found.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

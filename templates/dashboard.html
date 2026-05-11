@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Garage System{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Real-time overview of workshop activity, revenue, and low stock items.{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="dashboard-card h-100">
+            <p class="text-uppercase small fw-semibold text-muted mb-2">Customers</p>
+            <h3 class="display-6 fw-bold mb-1">{{ stats.total_customers }}</h3>
+            <p class="text-muted mb-0">Registered customer profiles</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="dashboard-card h-100">
+            <p class="text-uppercase small fw-semibold text-muted mb-2">Vehicles</p>
+            <h3 class="display-6 fw-bold mb-1">{{ stats.total_vehicles }}</h3>
+            <p class="text-muted mb-0">Vehicles linked to customers</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="dashboard-card h-100">
+            <p class="text-uppercase small fw-semibold text-muted mb-2">Open Jobs</p>
+            <h3 class="display-6 fw-bold mb-1">{{ stats.open_jobs }}</h3>
+            <p class="text-muted mb-0">Pending or in-progress service work</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="dashboard-card h-100">
+            <p class="text-uppercase small fw-semibold text-muted mb-2">Revenue</p>
+            <h3 class="display-6 fw-bold mb-1">{{ stats.total_revenue | currency }}</h3>
+            <p class="text-muted mb-0">Paid invoice total</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-8">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="h5 fw-bold mb-0">Recent Service Jobs</h3>
+                <span class="badge text-bg-primary rounded-pill px-3 py-2">{{ stats.open_jobs }} open</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Job</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Vehicle</th>
+                            <th>Mechanic</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for job in recent_jobs %}
+                            <tr>
+                                <td>#{{ job.job_id }}</td>
+                                <td>{{ job.job_date }}</td>
+                                <td>{{ job.customer_name }}</td>
+                                <td>{{ job.registration_no }}</td>
+                                <td>{{ job.mechanic_name }}</td>
+                                <td>
+                                    <span class="badge {% if job.status == 'Completed' %}text-bg-success{% elif job.status == 'In Progress' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">
+                                        {{ job.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No service jobs found.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="content-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="h5 fw-bold mb-0">Low Stock Alerts</h3>
+                <span class="badge text-bg-danger rounded-pill px-3 py-2">{{ stats.low_stock_count }}</span>
+            </div>
+            <div class="d-flex flex-column gap-3">
+                {% for part in low_stock_parts %}
+                    <div class="low-stock-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4 class="h6 fw-bold mb-1">{{ part.part_name }}</h4>
+                            <span class="badge text-bg-danger">Stock {{ part.quantity_in_stock }}</span>
+                        </div>
+                        <p class="text-muted mb-0">{{ part.part_number }} | Reorder at {{ part.reorder_level }}</p>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        All spare parts are above reorder level.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

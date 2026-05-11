@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Service Jobs | Garage System{% endblock %}
+{% block page_title %}Service Jobs{% endblock %}
+{% block page_subtitle %}Create service jobs, assign mechanics, reserve parts, and update progress.{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="content-card">
+            <h3 class="h5 fw-bold mb-3">Create Service Job</h3>
+            {% if current_user.role in job_roles %}
+                <form method="POST">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Job Date</label>
+                            <input type="date" name="job_date" class="form-control rounded-4" value="{{ today }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Customer</label>
+                            <select name="customer_id" class="form-select rounded-4" required>
+                                <option value="">Select customer</option>
+                                {% for customer in customers %}
+                                    <option value="{{ customer.customer_id }}">{{ customer.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Vehicle</label>
+                            <select name="vehicle_id" class="form-select rounded-4" required>
+                                <option value="">Select vehicle</option>
+                                {% for vehicle in vehicles %}
+                                    <option value="{{ vehicle.vehicle_id }}">
+                                        {{ vehicle.registration_no }} - {{ vehicle.make }} {{ vehicle.model }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Assign Mechanic</label>
+                            <select name="user_id" class="form-select rounded-4" required>
+                                <option value="">Select mechanic</option>
+                                {% for mechanic in mechanics %}
+                                    <option value="{{ mechanic.user_id }}">{{ mechanic.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Customer Complaint</label>
+                            <textarea name="complaint" class="form-control rounded-4" rows="3" required></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Diagnosis</label>
+                            <textarea name="diagnosis" class="form-control rounded-4" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Part Slot 1</label>
+                            <select name="part_1" class="form-select rounded-4">
+                                <option value="">No part</option>
+                                {% for part in parts %}
+                                    <option value="{{ part.part_id }}">{{ part.part_name }} ({{ part.quantity_in_stock }} in stock)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label fw-semibold">Qty</label>
+                            <input type="number" min="1" name="qty_1" class="form-control rounded-4">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Part Slot 2</label>
+                            <select name="part_2" class="form-select rounded-4">
+                                <option value="">No part</option>
+                                {% for part in parts %}
+                                    <option value="{{ part.part_id }}">{{ part.part_name }} ({{ part.quantity_in_stock }} in stock)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label fw-semibold">Qty</label>
+                            <input type="number" min="1" name="qty_2" class="form-control rounded-4">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Part Slot 3</label>
+                            <select name="part_3" class="form-select rounded-4">
+                                <option value="">No part</option>
+                                {% for part in parts %}
+                                    <option value="{{ part.part_id }}">{{ part.part_name }} ({{ part.quantity_in_stock }} in stock)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label fw-semibold">Qty</label>
+                            <input type="number" min="1" name="qty_3" class="form-control rounded-4">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Labour Charge</label>
+                            <input type="number" step="0.01" name="labour_charge" class="form-control rounded-4" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Initial Status</label>
+                            <select name="status" class="form-select rounded-4">
+                                <option value="Pending">Pending</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-dark rounded-4 mt-4">Create Service Job</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="h5 fw-bold mb-0">Job Tracker</h3>
+        <span class="badge text-bg-primary rounded-pill px-3 py-2">{{ jobs|length }} jobs</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Job</th>
+                    <th>Vehicle</th>
+                    <th>Customer</th>
+                    <th>Complaint</th>
+                    <th>Parts Used</th>
+                    <th>Labour</th>
+                    <th>Assignment / Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">#{{ job.job_id }}</div>
+                            <div class="small text-muted">{{ job.job_date }}</div>
+                        </td>
+                        <td>{{ job.registration_no }}<div class="small text-muted">{{ job.make }} {{ job.model }}</div></td>
+                        <td>{{ job.customer_name }}</td>
+                        <td>
+                            <div>{{ job.complaint }}</div>
+                            <div class="small text-muted">{{ job.diagnosis or 'Diagnosis pending' }}</div>
+                        </td>
+                        <td>
+                            <div>{{ job.parts_summary }}</div>
+                            <div class="small text-muted">Parts total: {{ job.parts_total | currency }}</div>
+                        </td>
+                        <td>{{ job.labour_charge | currency }}</td>
+                        <td class="job-update-cell">
+                            <form method="POST" action="{{ url_for('update_service_job', job_id=job.job_id) }}" class="d-flex flex-column gap-2">
+                                <select name="user_id" class="form-select form-select-sm rounded-3">
+                                    {% for mechanic in mechanics %}
+                                        <option value="{{ mechanic.user_id }}" {% if mechanic.user_id == job.user_id %}selected{% endif %}>
+                                            {{ mechanic.full_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <select name="status" class="form-select form-select-sm rounded-3">
+                                    <option value="Pending" {% if job.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                    <option value="In Progress" {% if job.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="Completed" {% if job.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                    <option value="Cancelled" {% if job.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                </select>
+                                <button type="submit" class="btn btn-outline-dark btn-sm rounded-pill">Update Job</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">No service jobs found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

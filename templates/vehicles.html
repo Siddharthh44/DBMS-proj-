@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Vehicles | Garage System{% endblock %}
+{% block page_title %}Vehicle Management{% endblock %}
+{% block page_subtitle %}Link vehicles to customers and keep registration details current.{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-xl-4">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="h5 fw-bold mb-0">{% if edit_vehicle %}Edit Vehicle{% else %}Add Vehicle{% endif %}</h3>
+                {% if edit_vehicle %}
+                    <a href="{{ url_for('vehicles') }}" class="btn btn-outline-secondary btn-sm rounded-pill">Cancel</a>
+                {% endif %}
+            </div>
+
+            {% if current_user.role in write_roles %}
+                <form method="POST" action="{% if edit_vehicle %}{{ url_for('update_vehicle', vehicle_id=edit_vehicle.vehicle_id) }}{% else %}{{ url_for('vehicles') }}{% endif %}">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Customer</label>
+                        <select name="customer_id" class="form-select rounded-4" required>
+                            <option value="">Select customer</option>
+                            {% for customer in customers %}
+                                <option value="{{ customer.customer_id }}" {% if edit_vehicle and customer.customer_id == edit_vehicle.customer_id %}selected{% endif %}>
+                                    {{ customer.full_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Registration Number</label>
+                        <input type="text" name="registration_no" class="form-control rounded-4" required value="{{ edit_vehicle.registration_no if edit_vehicle else '' }}">
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Make</label>
+                            <input type="text" name="make" class="form-control rounded-4" required value="{{ edit_vehicle.make if edit_vehicle else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Model</label>
+                            <input type="text" name="model" class="form-control rounded-4" required value="{{ edit_vehicle.model if edit_vehicle else '' }}">
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Year</label>
+                            <input type="number" name="manufacture_yr" class="form-control rounded-4" required value="{{ edit_vehicle.manufacture_yr if edit_vehicle else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mileage</label>
+                            <input type="number" name="mileage" class="form-control rounded-4" required value="{{ edit_vehicle.mileage if edit_vehicle else '' }}">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-dark rounded-4 w-100 mt-4">{% if edit_vehicle %}Update Vehicle{% else %}Save Vehicle{% endif %}</button>
+                </form>
+            {% else %}
+                <div class="alert alert-info rounded-4 mb-0">
+                    Your role can view vehicles but cannot create or edit them.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-xl-8">
+        <div class="content-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="h5 fw-bold mb-0">Vehicle Register</h3>
+                <span class="badge text-bg-primary rounded-pill px-3 py-2">{{ vehicles|length }} vehicles</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Registration</th>
+                            <th>Customer</th>
+                            <th>Vehicle</th>
+                            <th>Year</th>
+                            <th>Mileage</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for vehicle in vehicles %}
+                            <tr>
+                                <td class="fw-semibold">{{ vehicle.registration_no }}</td>
+                                <td>
+                                    {{ vehicle.customer_name }}
+                                    <div class="small text-muted">{{ vehicle.customer_phone }}</div>
+                                </td>
+                                <td>{{ vehicle.make }} {{ vehicle.model }}</td>
+                                <td>{{ vehicle.manufacture_yr }}</td>
+                                <td>{{ "{:,}".format(vehicle.mileage) }} km</td>
+                                <td class="text-end">
+                                    {% if current_user.role in write_roles %}
+                                        <a href="{{ url_for('vehicles', edit=vehicle.vehicle_id) }}" class="btn btn-outline-dark btn-sm rounded-pill">Edit</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No vehicles found.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
