@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+
+{% block title %}DBMS Concept Showcase - Fender Garage{% endblock %}
+{% block header_title %}DBMS Concept & Architecture Showcase{% endblock %}
+
+{% block head %}
+<!-- Mermaid JS for ER rendering -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.2.4/dist/mermaid.min.js"></script>
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'dark'
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<!-- Tabs Navigation -->
+<ul class="nav nav-tabs border-secondary mb-4" id="showcaseTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active text-light bg-transparent border-0 border-bottom border-3 border-primary" id="er-tab" data-bs-toggle="tab" data-bs-target="#er-pane" type="button" role="tab" aria-controls="er-pane" aria-selected="true">
+            <i class="bi bi-diagram-3-fill me-2"></i>ER Mapping Diagram
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-secondary bg-transparent border-0" id="schema-tab" data-bs-toggle="tab" data-bs-target="#schema-pane" type="button" role="tab" aria-controls="schema-pane" aria-selected="false">
+            <i class="bi bi-table me-2"></i>Relational Schema Inspector
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-secondary bg-transparent border-0" id="concepts-tab" data-bs-toggle="tab" data-bs-target="#concepts-pane" type="button" role="tab" aria-controls="concepts-pane" aria-selected="false">
+            <i class="bi bi-bookmark-check-fill me-2"></i>Normalization & Integrity
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link text-secondary bg-transparent border-0" id="procedures-tab" data-bs-toggle="tab" data-bs-target="#procedures-pane" type="button" role="tab" aria-controls="procedures-pane" aria-selected="false">
+            <i class="bi bi-gear-fill me-2"></i>Triggers & Procedures
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="showcaseTabsContent">
+    <!-- ER Diagram Pane -->
+    <div class="tab-pane fade show active" id="er-pane" role="tabpanel" aria-labelledby="er-tab" tabindex="0">
+        <div class="card-db">
+            <h3 class="fs-6 fw-bold mb-3"><i class="bi bi-diagram-3-fill text-primary me-2"></i>Conceptual Entity-Relationship Diagram</h3>
+            <p class="text-secondary small mb-4">
+                The diagram below visualizes the entities and their logical mappings modeled within the `garage_db` database. 
+                Relationships are established using primary-to-foreign key links.
+            </p>
+            
+            <div class="d-flex justify-content-center p-4 rounded bg-dark border border-secondary mb-4">
+                <div class="mermaid w-100" style="max-width: 800px;">
+                    erDiagram
+                        USER ||--o{ SERVICE_JOB : "diagnoses / completes"
+                        CUSTOMER ||--o{ VEHICLE : "owns"
+                        CUSTOMER ||--o{ SERVICE_JOB : "requests"
+                        CUSTOMER ||--o{ INVOICE : "pays"
+                        VEHICLE ||--o{ SERVICE_JOB : "undergoes"
+                        SUPPLIER ||--o{ SPARE_PART : "supplies"
+                        SERVICE_JOB ||--|| INVOICE : "generates (1:1)"
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <h4 class="fs-6 fw-bold text-light">Entity Cardinality Explanations</h4>
+                    <ul class="text-secondary small ps-3">
+                        <li class="mb-2"><strong class="text-light">Customer to Vehicle (1:N)</strong>: A customer profile can own multiple vehicles, but each vehicle record is tied to exactly one customer ID.</li>
+                        <li class="mb-2"><strong class="text-light">Supplier to Spare Part (1:N)</strong>: A vendor supplies multiple parts, but each part in the inventory matches one supplier.</li>
+                        <li class="mb-2"><strong class="text-light">Service Job to Invoice (1:1)</strong>: A complete service job produces exactly one invoice. Managed using a unique key constraint on `invoice(job_id)`.</li>
+                    </ul>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <h4 class="fs-6 fw-bold text-light">Relational Integrity Restraints</h4>
+                    <ul class="text-secondary small ps-3">
+                        <li class="mb-2"><strong class="text-light">ON DELETE CASCADE</strong>: Configured on `vehicle(customer_id)`. Deleting a customer automatically removes all their registered vehicles to prevent orphaned rows.</li>
+                        <li class="mb-2"><strong class="text-light">ON DELETE RESTRICT</strong>: Configured on service records, invoices, and suppliers. The database rejects deletes if active transaction sheets depend on them, preventing accidental loss of historic financial data.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schema Browser Pane -->
+    <div class="tab-pane fade" id="schema-pane" role="tabpanel" aria-labelledby="schema-tab" tabindex="0">
+        <div class="card-db">
+            <h3 class="fs-6 fw-bold mb-3"><i class="bi bi-search text-primary me-2"></i>Live Relational Schema Inspector</h3>
+            <p class="text-secondary small mb-4">
+                The catalog metadata below is queried dynamically in real-time from the MySQL <code class="text-primary">INFORMATION_SCHEMA.COLUMNS</code> tables, representing the absolute source of truth of the database structure.
+            </p>
+
+            <div class="accordion accordion-flush border border-secondary rounded" id="schemaAccordion" style="background: transparent;">
+                {% for table_name, columns in db_tables.items() %}
+                <div class="accordion-item bg-transparent text-light border-secondary" style="border-bottom: 1px solid var(--border-color);">
+                    <h2 class="accordion-header" id="heading_{{ table_name }}">
+                        <button class="accordion-button collapsed bg-transparent text-light fw-bold py-3 fs-6" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_{{ table_name }}" aria-expanded="false" aria-controls="collapse_{{ table_name }}" style="box-shadow: none;">
+                            <i class="bi bi-grid-3x3-gap-fill text-primary me-2"></i>Table: {{ table_name }} 
+                            <span class="badge bg-secondary rounded-pill ms-3" style="font-size: 0.65rem;">{{ columns|length }} Columns</span>
+                        </button>
+                    </h2>
+                    <div id="collapse_{{ table_name }}" class="accordion-collapse collapse" aria-labelledby="heading_{{ table_name }}" data-bs-parent="#schemaAccordion">
+                        <div class="accordion-body px-4 py-3 bg-dark">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-sm table-borderless align-middle mb-0" style="font-size: 0.8rem;">
+                                    <thead>
+                                        <tr class="text-secondary border-bottom border-secondary-subtle">
+                                            <th class="py-2">Column Name</th>
+                                            <th class="py-2">DataType / Type Size</th>
+                                            <th class="py-2 text-center">Nullable</th>
+                                            <th class="py-2 text-center">Key Attribute</th>
+                                            <th class="py-2">Default Value</th>
+                                            <th class="py-2">Extra Specs</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for col in columns %}
+                                        <tr class="border-bottom border-secondary" style="opacity: 0.85;">
+                                            <td class="py-2 fw-semibold text-light">{{ col.COLUMN_NAME }}</td>
+                                            <td class="py-2 text-info monospace-view p-0 bg-transparent border-0" style="font-size: 0.75rem;">{{ col.COLUMN_TYPE }}</td>
+                                            <td class="py-2 text-center">
+                                                {% if col.IS_NULLABLE == 'YES' %}
+                                                    <span class="text-secondary">YES</span>
+                                                {% else %}
+                                                    <span class="text-danger fw-bold">NO</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="py-2 text-center">
+                                                {% if col.COLUMN_KEY == 'PRI' %}
+                                                    <span class="badge bg-primary text-white" style="font-size: 0.65rem;">Primary Key</span>
+                                                {% elif col.COLUMN_KEY == 'UNI' %}
+                                                    <span class="badge bg-success text-white" style="font-size: 0.65rem;">Unique Key</span>
+                                                {% elif col.COLUMN_KEY == 'MUL' %}
+                                                    <span class="badge bg-info text-dark" style="font-size: 0.65rem;">Foreign Key</span>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="py-2">{{ col.COLUMN_DEFAULT or 'NULL' }}</td>
+                                            <td class="py-2 text-secondary">{{ col.EXTRA or '-' }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Concepts Pane -->
+    <div class="tab-pane fade" id="concepts-pane" role="tabpanel" aria-labelledby="concepts-tab" tabindex="0">
+        <div class="card-db">
+            <h3 class="fs-6 fw-bold mb-3"><i class="bi bi-bookmark-check-fill text-primary me-2"></i>Academic Normalization & Transaction Analysis</h3>
+            
+            <div class="row">
+                <!-- Normalization -->
+                <div class="col-md-6 mb-4">
+                    <h4 class="fs-6 fw-bold text-light mb-3">1. Normalization Review & Violations</h4>
+                    <p class="text-secondary small">
+                        To demonstrate database design constraints for college evaluators, the schema intentionally exhibits design trade-offs:
+                    </p>
+                    
+                    <div class="alert alert-warning border-0 p-3 mb-3 small" style="background-color: rgba(245, 158, 11, 0.05);">
+                        <h6 class="fw-bold text-warning mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i>1NF Violation Case Study</h6>
+                        <p class="text-secondary mb-2">
+                            The column <code class="text-light">parts_used</code> in the <code class="text-light">service_job</code> table stores serialised JSON arrays containing multiple fields (part ID, quantity, price, totals).
+                        </p>
+                        <p class="text-secondary mb-0">
+                            <strong>Reason for Violation</strong>: 1NF dictates all values in a table must be atomic. Storing composite structures in a text column violates this.
+                        </p>
+                        <p class="text-secondary mt-2 mb-0">
+                            <strong>How to Normalize</strong>: Create a junction table <code class="text-light">service_job_parts(job_id, part_id, quantity, unit_price)</code> to make values atomic.
+                        </p>
+                    </div>
+
+                    <div class="alert alert-warning border-0 p-3 small" style="background-color: rgba(245, 158, 11, 0.05);">
+                        <h6 class="fw-bold text-warning mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i>3NF Violation Case Study</h6>
+                        <p class="text-secondary mb-2">
+                            The table <code class="text-light">invoice</code> stores <code class="text-light">grand_total</code>, <code class="text-light">labour_total</code>, and <code class="text-light">parts_total</code>.
+                        </p>
+                        <p class="text-secondary mb-0">
+                            <strong>Reason for Violation</strong>: Since $grand\_total = labour\_total + parts\_total$, it is a derived attribute, which introduces a transitive dependency ($\text{invoice\_id} \rightarrow (\text{labour}, \text{parts}) \rightarrow \text{grand\_total}$).
+                        </p>
+                        <p class="text-secondary mt-2 mb-0">
+                            <strong>Trade-off Justification</strong>: Denormalized deliberately to minimize query latency when pulling sales metrics or rendering client summaries.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Transaction processing -->
+                <div class="col-md-6 mb-4">
+                    <h4 class="fs-6 fw-bold text-light mb-3">2. Transaction Processing (ACID)</h4>
+                    <p class="text-secondary small">
+                        Marking a service job as <strong class="text-light">Completed</strong> triggers a database transaction.
+                    </p>
+                    
+                    <div class="monospace-view p-3 small mb-3">
+                        <span class="text-secondary"># Sequence executed inside jobs.py route</span><br>
+                        <strong>START TRANSACTION;</strong><br>
+                        <span class="text-success"># 1. Row-lock part inventory count to prevent concurrent edits</span><br>
+                        SELECT quantity_in_stock FROM spare_part WHERE id = ? <strong>FOR UPDATE;</strong><br>
+                        <span class="text-success"># 2. Check stock levels. If count &lt; requested quantity, abort:</span><br>
+                        <strong>ROLLBACK;</strong><br>
+                        <span class="text-success"># 3. If stock is sufficient, deduct items:</span><br>
+                        UPDATE spare_part SET quantity_in_stock = quantity_in_stock - ? WHERE id = ?;<br>
+                        <span class="text-success"># 4. Finalise job sheet and log details:</span><br>
+                        UPDATE service_job SET status = 'Completed', diagnosis = ? WHERE id = ?;<br>
+                        <span class="text-success"># 5. Automatically create invoice receipt:</span><br>
+                        INSERT INTO invoice (job_id, customer_id, grand_total, ...) VALUES (...);<br>
+                        <strong>COMMIT;</strong>
+                    </div>
+
+                    <h5 class="fs-6 fw-bold text-light mb-2">ACID Mappings:</h5>
+                    <ul class="text-secondary small ps-3">
+                        <li class="mb-1"><strong>Atomicity</strong>: Rollback returns the database to its pre-transaction state if inventory levels fail, avoiding partial updates.</li>
+                        <li class="mb-1"><strong>Consistency</strong>: Checks prevent stock counts from going negative.</li>
+                        <li class="mb-1"><strong>Isolation</strong>: The <code class="text-light">FOR UPDATE</code> row-lock isolates active updates from concurrent receptionist sales.</li>
+                        <li class="mb-1"><strong>Durability</strong>: Once committed, records are permanently written to the MySQL storage engine.</li>
+                    </ul>
+                </div>
+        </div>
+    </div>
+
+    <!-- Triggers and Stored Procedures Pane -->
+    <div class="tab-pane fade" id="procedures-pane" role="tabpanel" aria-labelledby="procedures-tab" tabindex="0">
+        <div class="card-db">
+            <h3 class="fs-6 fw-bold mb-3"><i class="bi bi-gear-fill text-primary me-2"></i>Advanced Procedural SQL Engine</h3>
+            <p class="text-secondary small mb-4">
+                This console lets you interactively execute and monitor advanced procedural database components (triggers and cursors) running natively inside the MySQL database server.
+            </p>
+
+            <div class="row">
+                <!-- Stored Procedures Execution -->
+                <div class="col-lg-5 mb-4" id="proc-section">
+                    <div class="p-3 bg-dark border border-secondary rounded mb-4">
+                        <h4 class="fs-6 fw-bold text-light mb-3"><i class="bi bi-cpu text-info me-2"></i>Cursor-Based Stored Procedures</h4>
+                        
+                        <div class="mb-4">
+                            <p class="text-secondary small mb-2">
+                                <strong>Procedure 1: get_monthly_revenue_summary</strong><br>
+                                Uses a MySQL CURSOR to iterate over all paid invoices and sum the total revenue dynamically in a cursor loop.
+                            </p>
+                            <form action="{{ url_for('db_showcase.run_revenue_procedure') }}" method="POST">
+                                <button type="submit" class="btn btn-sm btn-outline-info w-100 py-2">
+                                    <i class="bi bi-play-circle-fill me-1"></i> Execute Revenue Cursor Loop
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="mb-2">
+                            <p class="text-secondary small mb-2">
+                                <strong>Procedure 2: get_low_stock_report</strong><br>
+                                Loops through all spare parts using a CURSOR, compiles a text-based report of items below safety levels, and outputs a formatted summary.
+                            </p>
+                            <form action="{{ url_for('db_showcase.run_lowstock_procedure') }}" method="POST">
+                                <button type="submit" class="btn btn-sm btn-outline-warning w-100 py-2">
+                                    <i class="bi bi-file-earmark-bar-graph me-1"></i> Compile Low Stock Cursor Report
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-dark border border-secondary rounded">
+                        <h4 class="fs-6 fw-bold text-light mb-2"><i class="bi bi-info-circle text-primary me-2"></i>Trigger Details</h4>
+                        <ul class="text-secondary small ps-3 mb-0">
+                            <li class="mb-2"><strong class="text-light">trg_job_completion_audit (AFTER UPDATE)</strong>: Fires automatically when job status updates to 'Completed'.</li>
+                            <li class="mb-2"><strong class="text-light">trg_low_stock_alert (AFTER UPDATE)</strong>: Fires when a spare part's stock level drops below its safety limit.</li>
+                            <li class="mb-0"><strong class="text-light">trg_invoice_insert_audit (AFTER INSERT)</strong>: Logs trigger data automatically during invoice generation.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Live Audit Logs -->
+                <div class="col-lg-7 mb-4">
+                    <div class="p-3 bg-dark border border-secondary rounded" style="min-height: 100%;">
+                        <h4 class="fs-6 fw-bold text-light mb-3"><i class="bi bi-activity text-success me-2"></i>Live Trigger execution Logs (db_log Table)</h4>
+                        
+                        {% if db_logs %}
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-dark table-sm table-borderless align-middle mb-0" style="font-size: 0.78rem;">
+                                <thead>
+                                    <tr class="text-secondary border-bottom border-secondary-subtle">
+                                        <th class="py-2">Time</th>
+                                        <th class="py-2">Event Type</th>
+                                        <th class="py-2">Ref ID</th>
+                                        <th class="py-2">Auto-Generated Message</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in db_logs %}
+                                    <tr class="border-bottom border-secondary" style="opacity: 0.95;">
+                                        <td class="py-2 text-secondary">{{ log.created_at }}</td>
+                                        <td class="py-2">
+                                            {% if log.event_type == 'JOB_COMPLETED' %}
+                                                <span class="badge bg-primary" style="font-size: 0.65rem;">JOB COMPLETED</span>
+                                            {% elif log.event_type == 'LOW_STOCK' %}
+                                                <span class="badge bg-danger" style="font-size: 0.65rem;">LOW STOCK</span>
+                                            {% elif log.event_type == 'INVOICE_GENERATED' %}
+                                                <span class="badge bg-success" style="font-size: 0.65rem;">INVOICE GEN</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary" style="font-size: 0.65rem;">{{ log.event_type }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="py-2" style="font-family: monospace; font-size: 0.75rem; color: #60a5fa;">#{{ log.reference_id }}</td>
+                                        <td class="py-2 text-light">{{ log.message }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-secondary small my-4 text-center">No trigger logs registered yet. Actions like completing service jobs or stock-outs will populate this log.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Maintain active tabs across refreshes via hash
+    document.addEventListener("DOMContentLoaded", function() {
+        const hash = window.location.hash;
+        if (hash) {
+            const triggerEl = document.querySelector(`button[data-bs-target="${hash}"]`);
+            if (triggerEl) {
+                const tab = new bootstrap.Tab(triggerEl);
+                tab.show();
+            }
+        }
+        
+        const tabElList = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabElList.forEach(tabEl => {
+            tabEl.addEventListener('shown.bs.tab', function (event) {
+                const target = event.target.getAttribute('data-bs-target');
+                window.location.hash = target;
+            });
+        });
+    });
+</script>
+{% endblock %}

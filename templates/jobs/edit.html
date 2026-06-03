@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+
+{% block title %}Job Sheet #{{ job.job_id }} - Fender Garage{% endblock %}
+{% block header_title %}Service Job Sheet #{{ job.job_id }}{% endblock %}
+
+{% block content %}
+{% set is_readonly = job.status in ['Completed', 'Cancelled'] %}
+
+<div class="row">
+    <!-- Left Column: Job Sheet Form -->
+    <div class="col-lg-8 mb-4">
+        <div class="card-db">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary">
+                <h3 class="fs-6 fw-bold mb-0 text-primary">Technical Log Sheet</h3>
+                <div>
+                    <span class="small text-secondary">Status:</span>
+                    {% if job.status == 'Pending' %}
+                        <span class="badge-status status-pending">Pending</span>
+                    {% elif job.status == 'In Progress' %}
+                        <span class="badge-status status-progress">In Progress</span>
+                    {% elif job.status == 'Completed' %}
+                        <span class="badge-status status-completed">Completed</span>
+                    {% else %}
+                        <span class="badge-status status-cancelled">Cancelled</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <form action="{{ url_for('jobs.update_job', job_id=job.job_id) }}" method="POST" id="jobSheetForm">
+                <!-- Hidden input for parts JSON -->
+                <input type="hidden" name="parts_used_json" id="parts_used_json" value="{{ job.parts_used or '[]' }}">
+                <input type="hidden" name="status" id="job_status" value="{{ job.status }}">
+                
+                <div class="mb-3">
+                    <label class="form-label form-label-fender">Customer Complaint</label>
+                    <div class="p-3 bg-dark border border-secondary text-secondary rounded" style="font-size: 0.85rem;">
+                        {{ job.complaint }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="diagnosis" class="form-label form-label-fender">Diagnosis & Operations Details</label>
+                    <textarea class="form-control form-control-fender" id="diagnosis" name="diagnosis" rows="4" required {% if is_readonly %}readonly{% endif %} placeholder="e.g. Inspected front wheels. Worn brake pads. Replaced brake pads and topped up brake fluid. Engine oil changed.">{{ job.diagnosis or '' }}</textarea>
+                </div>
+
+                <!-- Spare Parts Section -->
+                <div class="mb-4">
+                    <label class="form-label form-label-fender">Parts Used during Service</label>
+                    
+                    {% if not is_readonly %}
+                    <!-- Part Selector Panel -->
+                    <div class="row g-2 align-items-end mb-3">
+                        <div class="col-md-6">
+                            <label class="small text-secondary mb-1">Select Spare Part</label>
+                            <select class="form-select form-control-fender" id="partSelector">
+                                <option value="" disabled selected>Select a spare part from catalog...</option>
+                                {% for part in parts %}
+                                <option value="{{ part.part_id }}" data-price="{{ part.selling_price }}" data-stock="{{ part.quantity_in_stock }}" data-number="{{ part.part_number }}">
+                                    {{ part.part_name }} (Stock: {{ part.quantity_in_stock }} | Price: ₹{{ part.selling_price }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small text-secondary mb-1">Quantity</label>
+                            <input type="number" class="form-control form-control-fender" id="partQty" value="1" min="1">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-success w-100" id="addPartBtn">
+                                <i class="bi bi-plus-lg me-1"></i> Add Part
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Selected Parts Table -->
+                    <div class="table-responsive">
+                        <table class="table table-dark table-fender align-middle mb-0 text-nowrap" id="selectedPartsTable">
+                            <thead>
+                                <tr>
+                                    <th>Part Details</th>
+                                    <th>Unit Price</th>
+                                    <th>Quantity</th>
+                                    <th>Total Cost</th>
+                                    {% if not is_readonly %}<th class="text-end">Action</th>{% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Built dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <label for="labour_charge" class="form-label form-label-fender">Labour Service Charge (₹) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control form-control-fender" id="labour_charge" name="labour_charge" step="0.01" value="{{ job.labour_charge or 0.00 }}" required {% if is_readonly %}readonly{% endif %} min="0">
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label form-label-fender">Billing Summary</label>
+                        <div class="p-3 bg-dark border border-secondary rounded">
+                            <div class="d-flex justify-content-between small text-secondary mb-1">
+                                <span>Parts Total:</span>
+                                <span>₹<span id="summary_parts_total">0.00</span></span>
+                            </div>
+                            <div class="d-flex justify-content-between small text-secondary mb-2">
+                                <span>Labour Cost:</span>
+                                <span>₹<span id="summary_labour_total">0.00</span></span>
+                            </div>
+                            <div class="d-flex justify-content-between fw-bold text-primary border-top border-secondary pt-2">
+                                <span>Grand Total Estimate:</span>
+                                <span>₹<span id="summary_grand_total">0.00</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit / Action Buttons -->
+                {% if not is_readonly %}
+                <div class="d-flex flex-wrap gap-2 pt-2 border-top border-secondary justify-content-between">
+                    <div>
+                        <button type="button" class="btn btn-outline-danger" onclick="submitWithStatus('Cancelled')">
+                            <i class="bi bi-x-circle me-1"></i> Cancel Service Job
+                        </button>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-primary" onclick="submitWithStatus('In Progress')">
+                            <i class="bi bi-save me-1"></i> Save Progress
+                        </button>
+                        <button type="button" class="btn btn-success px-4" onclick="submitWithStatus('Completed')">
+                            <i class="bi bi-check-circle-fill me-1"></i> Complete & Generate Invoice
+                        </button>
+                    </div>
+                </div>
+                {% else %}
+                <div class="pt-3 border-top border-secondary text-secondary">
+                    {% if job.status == 'Completed' %}
+                    <div class="alert alert-success border-0 small py-2 px-3 text-start d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-info-circle-fill me-2"></i>This service sheet was finalized and logged.</span>
+                        <a href="{{ url_for('billing.receipt_invoice', job_id=job.job_id) }}" class="btn btn-sm btn-success">
+                            <i class="bi bi-file-earmark-text-fill"></i> View Invoice Receipt
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger border-0 small py-2 px-3 text-start">
+                        <i class="bi bi-x-circle-fill me-2"></i>This service sheet was cancelled. No invoices were generated.
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column: Vehicle & Client Details Card -->
+    <div class="col-lg-4 mb-4">
+        <!-- Vehicle Card -->
+        <div class="card-db border-primary-custom mb-4">
+            <h3 class="fs-6 fw-bold mb-3"><i class="bi bi-car-front-fill text-primary me-2"></i>Vehicle Under Service</h3>
+            <div class="info-row d-flex justify-content-between align-items-center mb-2">
+                <span class="info-label text-secondary small">Registration No:</span>
+                <span class="registration-chip">{{ job.registration_no }}</span>
+            </div>
+            <div class="info-row d-flex justify-content-between align-items-center mb-2 border-top border-secondary pt-2">
+                <span class="info-label text-secondary small">Make & Model:</span>
+                <span class="fw-semibold">{{ job.make }} {{ job.model }}</span>
+            </div>
+            <div class="info-row d-flex justify-content-between align-items-center mb-2 border-top border-secondary pt-2">
+                <span class="info-label text-secondary small">Manufacture Year:</span>
+                <span>{{ job.manufacture_year }}</span>
+            </div>
+            <div class="info-row d-flex justify-content-between align-items-center mb-0 border-top border-secondary pt-2">
+                <span class="info-label text-secondary small">Odometer Mileage:</span>
+                <span>{{ "{:,}".format(job.mileage) }} km</span>
+            </div>
+        </div>
+
+        <!-- Customer Card -->
+        <div class="card-db border-success-custom mb-4">
+            <h3 class="fs-6 fw-bold mb-3"><i class="bi bi-person-fill text-success me-2"></i>Customer Information</h3>
+            <div class="mb-2">
+                <span class="text-secondary small">Owner Name:</span>
+                <span class="fw-semibold float-end">{{ job.customer_name }}</span>
+            </div>
+            <div class="mb-0 border-top border-secondary pt-2">
+                <span class="text-secondary small">Contact Phone:</span>
+                <span class="float-end">{{ job.customer_phone }}</span>
+            </div>
+        </div>
+
+        <!-- Mechanic/Owner Meta Card -->
+        <div class="card-db border-warning-custom">
+            <h3 class="fs-6 fw-bold mb-3"><i class="bi bi-clock-fill text-warning me-2"></i>Job Sheet Meta</h3>
+            <div class="mb-2">
+                <span class="text-secondary small">Job Date:</span>
+                <span class="float-end">{{ job.job_date }}</span>
+            </div>
+            <div class="mb-0 border-top border-secondary pt-2">
+                <span class="text-secondary small">Assigned Mechanic:</span>
+                <span class="fw-semibold float-end">{{ job.mechanic_name }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // In-memory array of parts used
+    let selectedParts = [];
+    const isReadOnly = JSON.parse('{{ "true" if is_readonly else "false" }}');
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Load initial parts used from input
+        const initialPartsVal = document.getElementById('parts_used_json').value;
+        try {
+            selectedParts = JSON.parse(initialPartsVal || '[]');
+        } catch (e) {
+            console.error("Error parsing parts JSON: ", e);
+            selectedParts = [];
+        }
+        
+        renderPartsTable();
+        calculateTotals();
+        
+        // Listen to Labour cost changes
+        const labourInput = document.getElementById('labour_charge');
+        if (labourInput) {
+            labourInput.addEventListener('input', calculateTotals);
+        }
+
+        // Add Part Button click event listener
+        const addPartBtn = document.getElementById('addPartBtn');
+        if (addPartBtn) {
+            addPartBtn.addEventListener('click', function() {
+                const selector = document.getElementById('partSelector');
+                const qtyInput = document.getElementById('partQty');
+                
+                const partId = selector.value;
+                if (!partId) {
+                    alert("Please select a spare part from the dropdown first.");
+                    return;
+                }
+                
+                const selectedOption = selector.options[selector.selectedIndex];
+                const price = parseFloat(selectedOption.getAttribute('data-price'));
+                const stock = parseInt(selectedOption.getAttribute('data-stock'));
+                const name = selectedOption.text.split(' (')[0];
+                const qty = parseInt(qtyInput.value);
+                
+                if (qty <= 0) {
+                    alert("Quantity must be greater than zero.");
+                    return;
+                }
+                
+                // Add or increment
+                const existingIndex = selectedParts.findIndex(item => item.part_id === parseInt(partId));
+                if (existingIndex > -1) {
+                    selectedParts[existingIndex].quantity += qty;
+                    selectedParts[existingIndex].line_total = selectedParts[existingIndex].quantity * selectedParts[existingIndex].unit_price;
+                } else {
+                    selectedParts.push({
+                        part_id: parseInt(partId),
+                        part_name: name,
+                        quantity: qty,
+                        unit_price: price,
+                        line_total: price * qty
+                    });
+                }
+                
+                // Reset selectors
+                selector.value = "";
+                qtyInput.value = "1";
+                
+                renderPartsTable();
+                calculateTotals();
+            });
+        }
+    });
+
+    // Render client-side parts list
+    function renderPartsTable() {
+        const tbody = document.querySelector('#selectedPartsTable tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        if (selectedParts.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${isReadOnly ? '4' : '5'}" class="text-secondary text-center py-3">No spare parts selected for this job sheet.</td></tr>`;
+            return;
+        }
+        
+        selectedParts.forEach((part, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><div class="fw-semibold text-light">${part.part_name}</div></td>
+                <td>₹${part.unit_price.toFixed(2)}</td>
+                <td>${part.quantity} units</td>
+                <td>₹${part.line_total.toFixed(2)}</td>
+                ${!isReadOnly ? `
+                <td class="text-end">
+                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removePart(${index})">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </td>` : ''}
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Remove part from list
+    function removePart(index) {
+        selectedParts.splice(index, 1);
+        renderPartsTable();
+        calculateTotals();
+    }
+
+    // Settle dynamic calculation displays
+    function calculateTotals() {
+        const partsTotal = selectedParts.reduce((sum, item) => sum + item.line_total, 0);
+        const labourVal = parseFloat(document.getElementById('labour_charge').value || 0);
+        const grandTotal = partsTotal + labourVal;
+        
+        document.getElementById('summary_parts_total').innerText = partsTotal.toFixed(2);
+        document.getElementById('summary_labour_total').innerText = labourVal.toFixed(2);
+        document.getElementById('summary_grand_total').innerText = grandTotal.toFixed(2);
+        
+        // Save current stringified JSON back to hidden input
+        document.getElementById('parts_used_json').value = JSON.stringify(selectedParts);
+    }
+
+    // Handles changing state trigger before form submissions
+    function submitWithStatus(newStatus) {
+        if (newStatus === 'Completed') {
+            const hasDiagnosis = document.getElementById('diagnosis').value.trim();
+            if (!hasDiagnosis) {
+                alert("You must record a diagnostic note before finalizing a service job sheet.");
+                return;
+            }
+            if (!confirm("Are you sure you want to complete this service job? This will deduct parts from inventory and automatically generate the invoice under a database transaction.")) {
+                return;
+            }
+        }
+        
+        document.getElementById('job_status').value = newStatus;
+        document.getElementById('jobSheetForm').submit();
+    }
+</script>
+{% endblock %}

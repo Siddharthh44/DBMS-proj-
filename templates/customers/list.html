@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+
+{% block title %}Customers & Vehicles - Fender Garage{% endblock %}
+{% block header_title %}Customers & Vehicles Directory{% endblock %}
+
+{% block content %}
+<!-- Tabs Navigation -->
+<ul class="nav nav-tabs border-secondary mb-4" id="directoryTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active"
+                id="customers-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#customers-pane"
+                type="button"
+                role="tab"
+                aria-controls="customers-pane"
+                aria-selected="true">
+            <i class="bi bi-people-fill me-2"></i>
+            Customers Directory
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link"
+                id="vehicles-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#vehicles-pane"
+                type="button"
+                role="tab"
+                aria-controls="vehicles-pane"
+                aria-selected="false">
+            <i class="bi bi-car-front-fill me-2"></i>
+            Vehicles Directory
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="directoryTabsContent">
+    <!-- Customers Pane -->
+    <div class="tab-pane fade show active" id="customers-pane" role="tabpanel" aria-labelledby="customers-tab" tabindex="0">
+        <div class="card-db">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                <!-- Search bar -->
+                <form action="{{ url_for('customers.list_customers') }}" method="GET" style="max-width: 420px; width: 100%;">
+                    <div class="search-container">
+                        <input
+                            type="text"
+                            name="search"
+                            class="form-control search-input"
+                            placeholder="Search by name or phone..."
+                            value="{{ search_query }}"
+                        >
+                        <button type="submit" class="search-btn">
+                            <i class="fas fa-search search-icon"></i>
+                        </button>
+                        {% if search_query %}
+                        <a href="{{ url_for('customers.list_customers') }}" class="clear-search-btn">
+                            <i class="fas fa-times"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+                
+                <!-- Quick Add button -->
+                <button type="button" class="btn btn-primary px-3" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+                    <i class="bi bi-person-plus-fill me-1"></i> Register Customer
+                </button>
+            </div>
+
+            {% if customers %}
+            <div class="table-responsive">
+                <table class="table table-dark table-hover table-fender align-middle mb-0 text-nowrap">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Full Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Address</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>#{{ customer.customer_id }}</td>
+                            <td class="fw-semibold">{{ customer.full_name }}</td>
+                            <td>{{ customer.phone }}</td>
+                            <td>{{ customer.email or 'N/A' }}</td>
+                            <td>{{ customer.address or 'N/A' }}</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 me-1" title="Register Vehicle"
+                                        onclick="openAddVehicleModal('{{ customer.customer_id }}', '{{ customer.full_name }}')">
+                                    <i class="bi bi-car-front"></i> +
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 me-1" title="Edit Customer"
+                                        onclick="openEditCustomerModal('{{ customer.customer_id }}', '{{ customer.full_name }}', '{{ customer.phone }}', '{{ customer.email }}', '{{ customer.address }}')">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+                                <form action="{{ url_for('customers.delete_customer', customer_id=customer.customer_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete customer {{ customer.full_name }}? This will trigger a RESTRICT constraint check.');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Delete Customer">
+                                        <i class="bi bi-trash3-fill"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-secondary text-center my-5">No customer profiles found. Register a new customer to begin.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Vehicles Pane -->
+    <div class="tab-pane fade" id="vehicles-pane" role="tabpanel" aria-labelledby="vehicles-tab" tabindex="0">
+        <div class="card-db">
+            <h3 class="fs-6 fw-bold mb-4"><i class="bi bi-car-front-fill text-primary me-2"></i>Registered Vehicles Catalog</h3>
+            
+            {% if vehicles %}
+            <div class="table-responsive">
+                <table class="table table-dark table-hover table-fender align-middle mb-0 text-nowrap">
+                    <thead>
+                        <tr>
+                            <th>Vehicle ID</th>
+                            <th>Owner (Customer)</th>
+                            <th>Registration No</th>
+                            <th>Make / Model</th>
+                            <th>Year</th>
+                            <th>Mileage</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for vehicle in vehicles %}
+                        <tr>
+                            <td>#{{ vehicle.vehicle_id }}</td>
+                            <td>{{ vehicle.owner_name }} <span class="text-secondary small">(ID: #{{ vehicle.customer_id }})</span></td>
+                            <td class="fw-bold text-primary">{{ vehicle.registration_no }}</td>
+                            <td>{{ vehicle.make }} {{ vehicle.model }}</td>
+                            <td>{{ vehicle.manufacture_year }}</td>
+                            <td>{{ "{:,}".format(vehicle.mileage) }} km</td>
+                            <td class="text-end">
+                                <form action="{{ url_for('customers.delete_vehicle', vehicle_id=vehicle.vehicle_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete vehicle {{ vehicle.registration_no }}? This will trigger constraint checks.');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2">
+                                        <i class="bi bi-trash3-fill"></i> Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-secondary text-center my-5">No vehicles registered yet. Go to Customers tab to register a vehicle.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Customer -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-fender">
+            <div class="modal-header modal-header-fender">
+                <h5 class="modal-title fw-bold" id="addCustomerModalLabel"><i class="bi bi-person-plus-fill text-primary me-2"></i>Register Customer</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('customers.add_customer') }}" method="POST">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="c_full_name" class="form-label form-label-fender">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-fender" id="c_full_name" name="full_name" required placeholder="e.g. Ramesh Kumar">
+                    </div>
+                    <div class="mb-3">
+                        <label for="c_phone" class="form-label form-label-fender">Phone Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-fender" id="c_phone" name="phone" required placeholder="e.g. 9876543210">
+                    </div>
+                    <div class="mb-3">
+                        <label for="c_email" class="form-label form-label-fender">Email Address</label>
+                        <input type="email" class="form-control form-control-fender" id="c_email" name="email" placeholder="e.g. ramesh@example.com">
+                    </div>
+                    <div class="mb-0">
+                        <label for="c_address" class="form-label form-label-fender">Address</label>
+                        <textarea class="form-control form-control-fender" id="c_address" name="address" rows="2" placeholder="e.g. Indiranagar, Bengaluru"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-fender">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Save Customer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edit Customer -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1" aria-labelledby="editCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-fender">
+            <div class="modal-header modal-header-fender">
+                <h5 class="modal-title fw-bold" id="editCustomerModalLabel"><i class="bi bi-pencil-fill text-primary me-2"></i>Edit Customer Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editCustomerForm" method="POST">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="edit_full_name" class="form-label form-label-fender">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-fender" id="edit_full_name" name="full_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_phone" class="form-label form-label-fender">Phone Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-fender" id="edit_phone" name="phone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_email" class="form-label form-label-fender">Email Address</label>
+                        <input type="email" class="form-control form-control-fender" id="edit_email" name="email">
+                    </div>
+                    <div class="mb-0">
+                        <label for="edit_address" class="form-label form-label-fender">Address</label>
+                        <textarea class="form-control form-control-fender" id="edit_address" name="address" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-fender">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i>Update Customer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Vehicle -->
+<div class="modal fade" id="addVehicleModal" tabindex="-1" aria-labelledby="addVehicleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-fender">
+            <div class="modal-header modal-header-fender">
+                <h5 class="modal-title fw-bold" id="addVehicleModalLabel"><i class="bi bi-car-front-fill text-success me-2"></i>Register Customer Vehicle</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('customers.add_vehicle') }}" method="POST">
+                <input type="hidden" id="v_customer_id" name="customer_id">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label form-label-fender d-block">Owner</label>
+                        <input type="text" class="form-control form-control-fender bg-transparent" id="v_customer_name" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="v_registration_no" class="form-label form-label-fender">Registration Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-fender" id="v_registration_no" name="registration_no" required placeholder="e.g. KA51MB1234">
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label for="v_make" class="form-label form-label-fender">Make <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-fender" id="v_make" name="make" required placeholder="e.g. Honda">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label for="v_model" class="form-label form-label-fender">Model <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-fender" id="v_model" name="model" required placeholder="e.g. City">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-0">
+                            <label for="v_year" class="form-label form-label-fender">Manufacture Year <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control form-control-fender" id="v_year" name="manufacture_year" required min="1980" max="2027" placeholder="e.g. 2021">
+                        </div>
+                        <div class="col-6 mb-0">
+                            <label for="v_mileage" class="form-label form-label-fender">Current Mileage (km)</label>
+                            <input type="number" class="form-control form-control-fender" id="v_mileage" name="mileage" value="0" min="0" placeholder="e.g. 25000">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-fender">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-save me-1"></i>Save Vehicle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Tab switching maintainance
+    document.addEventListener("DOMContentLoaded", function() {
+        const hash = window.location.hash;
+        if (hash) {
+            const triggerEl = document.querySelector(`button[data-bs-target="${hash}"]`);
+            if (triggerEl) {
+                const tab = new bootstrap.Tab(triggerEl);
+                tab.show();
+            }
+        }
+        
+        // Save current active tab in hash parameter
+        const tabElList = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabElList.forEach(tabEl => {
+            tabEl.addEventListener('shown.bs.tab', function (event) {
+                const target = event.target.getAttribute('data-bs-target');
+                window.location.hash = target;
+            });
+        });
+    });
+
+    // Populate Edit Customer form action and field inputs
+    function openEditCustomerModal(id, name, phone, email, address) {
+        document.getElementById('editCustomerForm').action = `/customers/edit/${id}`;
+        document.getElementById('edit_full_name').value = name;
+        document.getElementById('edit_phone').value = phone;
+        document.getElementById('edit_email').value = email;
+        document.getElementById('edit_address').value = address;
+        
+        const modal = new bootstrap.Modal(document.getElementById('editCustomerModal'));
+        modal.show();
+    }
+
+    // Populate Add Vehicle modal fields
+    function openAddVehicleModal(customerId, customerName) {
+        document.getElementById('v_customer_id').value = customerId;
+        document.getElementById('v_customer_name').value = customerName;
+        
+        const modal = new bootstrap.Modal(document.getElementById('addVehicleModal'));
+        modal.show();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,292 @@
+[2026-05-27 09:53:20] [SELECT] Table: user | Query: SELECT user_id, username, role, full_name FROM user WHERE username = %s AND password = %s... | Params: ('owner1', 'password')
+[2026-05-27 09:53:21] [SELECT] Table: service_job | Query: SELECT COUNT(*) AS active_jobs FROM service_job WHERE status IN ('Pending', 'In Progress')... | Params: None
+[2026-05-27 09:53:21] [SELECT] Table: spare_part | Query: SELECT COUNT(*) AS low_stock_count FROM spare_part WHERE quantity_in_stock <= reorder_level... | Params: None
+[2026-05-27 09:53:21] [SELECT] Table: invoice | Query: SELECT COALESCE(SUM(grand_total), 0.00) AS unpaid_invoices FROM invoice WHERE payment_status = 'Unpaid'... | Params: None
+[2026-05-27 09:53:21] [SELECT] Table: service_job | Query: SELECT j.job_id, j.job_date, j.status, j.labour_charge, j.complaint,... | Params: None
+[2026-05-27 09:53:21] [SELECT] Table: spare_part | Query: SELECT part_name, quantity_in_stock, reorder_level, category... | Params: None
+[2026-05-27 09:53:21] [SELECT] Table: invoice | Query: SELECT DATE_FORMAT(invoice_date, '%b %Y') AS month_name, SUM(grand_total) AS total_revenue... | Params: None
+[2026-05-27 09:53:21] [SELECT] Table: service_job | Query: SELECT status, COUNT(*) AS job_count ... | Params: None
+[2026-05-27 09:53:42] [SELECT] Table: invoice | Query: SELECT i.*, c.full_name AS customer_name, c.phone AS customer_phone,... | Params: None
+[2026-05-27 09:53:52] [SELECT] Table: service_job | Query: SELECT COUNT(*) AS active_jobs FROM service_job WHERE status IN ('Pending', 'In Progress')... | Params: None
+[2026-05-27 09:53:52] [SELECT] Table: spare_part | Query: SELECT COUNT(*) AS low_stock_count FROM spare_part WHERE quantity_in_stock <= reorder_level... | Params: None
+[2026-05-27 09:53:52] [SELECT] Table: invoice | Query: SELECT COALESCE(SUM(grand_total), 0.00) AS unpaid_invoices FROM invoice WHERE payment_status = 'Unpaid'... | Params: None
+[2026-05-27 09:53:52] [SELECT] Table: service_job | Query: SELECT j.job_id, j.job_date, j.status, j.labour_charge, j.complaint,... | Params: None
+[2026-05-27 09:53:52] [SELECT] Table: spare_part | Query: SELECT part_name, quantity_in_stock, reorder_level, category... | Params: None
+[2026-05-27 09:53:52] [SELECT] Table: invoice | Query: SELECT DATE_FORMAT(invoice_date, '%b %Y') AS month_name, SUM(grand_total) AS total_revenue... | Params: None
+[2026-05-27 09:53:52] [SELECT] Table: service_job | Query: SELECT status, COUNT(*) AS job_count ... | Params: None
+[2026-05-27 09:53:57] [SELECT] Table: invoice | Query: SELECT i.*, c.full_name AS customer_name, c.phone AS customer_phone,... | Params: None
+[2026-05-27 09:54:04] [SELECT] Table: customer | Query: SELECT * FROM customer ORDER BY full_name ASC... | Params: None
+[2026-05-27 09:54:04] [SELECT] Table: vehicle | Query: SELECT v.*, c.full_name AS owner_name ... | Params: None
+
+============================================================
+[TIMESTAMP] 2026-05-27 09:55:08
+[ACTION]    INSERT
+[TABLE]     customer
+
+[QUERY]
+INSERT INTO customer (full_name, phone, email, address) 
+        VALUES (%s, %s, %s, %s)
+
+[PARAMS]
+('Siddharth Mugadur', '7304878079', 'siddharth@example.com', 'Aecs layout,Bengaluru')
+
+[STATUS]    SUCCESS
+============================================================
+
+
+[UPDATED TABLE SNAPSHOT]
++-------------+-------------------+------------+---------------------------+--------------------------+
+| customer_id | full_name         | phone      | email                     | address                  |
++-------------+-------------------+------------+---------------------------+--------------------------+
+| 9           | Siddharth Mugadur | 7304878079 | siddharth@example.com     | Aecs layout,Bengaluru    |
+| 8           | Arjun Mehta       | 9876501243 | arjun.mehta@example.com   | Whitefield, Bengaluru    |
+| 7           | Karthik Reddy     | 9001001007 | karthik.reddy@example.com | Whitefield, Bengaluru    |
+| 6           | Meera Joshi       | 9001001006 | meera.joshi@example.com   | Banjara Hills, Hyderabad |
+| 5           | Aditya Menon      | 9001001005 | aditya.menon@example.com  | Kakkanad, Kochi          |
++-------------+-------------------+------------+---------------------------+--------------------------+
+[2026-05-27 09:55:08] [SELECT] Table: customer | Query: SELECT * FROM customer ORDER BY full_name ASC... | Params: None
+[2026-05-27 09:55:08] [SELECT] Table: vehicle | Query: SELECT v.*, c.full_name AS owner_name ... | Params: None
+
+============================================================
+[TIMESTAMP] 2026-05-27 09:55:47
+[ACTION]    INSERT
+[TABLE]     vehicle
+
+[QUERY]
+INSERT INTO vehicle (customer_id, registration_no, make, model, manufacture_year, mileage) 
+        VALUES (%s, %s, %s, %s, %s, %s)
+
+[PARAMS]
+('9', 'MH05CD5678', 'Hyundai', 'Verna', '2022', '56374')
+
+[STATUS]    SUCCESS
+============================================================
+
+
+[UPDATED TABLE SNAPSHOT]
++------------+-------------+-----------------+----------+--------+------------------+---------+
+| vehicle_id | customer_id | registration_no | make     | model  | manufacture_year | mileage |
++------------+-------------+-----------------+----------+--------+------------------+---------+
+| 11         | 9           | MH05CD5678      | Hyundai  | Verna  | 2022             | 56374   |
+| 10         | 8           | MH05CD5768      | Hyundai  | Tuscon | 2019             | 58422   |
+| 8          | 8           | KA05MN4587      | Hyundai  | Verna  | 2022             | 18500   |
+| 7          | 7           | KA05NP1357      | Tata     | Nexon  | 2021             | 33400   |
+| 6          | 6           | TS09LM2468      | Mahindra | XUV700 | 2022             | 27600   |
++------------+-------------+-----------------+----------+--------+------------------+---------+
+[2026-05-27 09:55:47] [SELECT] Table: customer | Query: SELECT * FROM customer ORDER BY full_name ASC... | Params: None
+[2026-05-27 09:55:47] [SELECT] Table: vehicle | Query: SELECT v.*, c.full_name AS owner_name ... | Params: None
+[2026-05-27 09:56:04] [SELECT] Table: service_job | Query: SELECT j.*, v.registration_no, v.make, v.model, c.full_name AS customer_name, u.full_name AS mechanic_name... | Params: None
+[2026-05-27 09:56:04] [SELECT] Table: vehicle | Query: SELECT vehicle_id, customer_id, registration_no, make, model FROM vehicle ORDER BY registration_no ASC... | Params: None
+[2026-05-27 09:56:04] [SELECT] Table: customer | Query: SELECT customer_id, full_name, phone FROM customer ORDER BY full_name ASC... | Params: None
+[2026-05-27 09:56:04] [SELECT] Table: user | Query: SELECT user_id, full_name FROM `user` WHERE role = 'mechanic' ORDER BY full_name ASC... | Params: None
+[2026-05-27 09:56:11] [SELECT] Table: spare_part | Query: SELECT p.*, s.supplier_name ... | Params: None
+[2026-05-27 09:56:11] [SELECT] Table: supplier | Query: SELECT * FROM supplier ORDER BY supplier_name ASC... | Params: None
+[2026-05-27 09:56:44] [SELECT] Table: service_job | Query: SELECT j.*, v.registration_no, v.make, v.model, c.full_name AS customer_name, u.full_name AS mechanic_name... | Params: None
+[2026-05-27 09:56:44] [SELECT] Table: vehicle | Query: SELECT vehicle_id, customer_id, registration_no, make, model FROM vehicle ORDER BY registration_no ASC... | Params: None
+[2026-05-27 09:56:44] [SELECT] Table: customer | Query: SELECT customer_id, full_name, phone FROM customer ORDER BY full_name ASC... | Params: None
+[2026-05-27 09:56:44] [SELECT] Table: user | Query: SELECT user_id, full_name FROM `user` WHERE role = 'mechanic' ORDER BY full_name ASC... | Params: None
+
+============================================================
+[TIMESTAMP] 2026-05-27 09:57:18
+[ACTION]    INSERT
+[TABLE]     service_job
+
+[QUERY]
+INSERT INTO service_job (vehicle_id, customer_id, user_id, job_date, complaint, status)
+        VALUES (%s, %s, %s, %s, %s, 'Pending')
+
+[PARAMS]
+('11', '9', '4', '2026-05-27', 'Gear not working')
+
+[STATUS]    SUCCESS
+============================================================
+
+
+[UPDATED TABLE SNAPSHOT]
++--------+------------+-------------+---------+------------+-----------------------------+-----------------------+------------------------------------------+---------------+-----------+
+| job_id | vehicle_id | customer_id | user_id | job_date   | complaint                   | diagnosis             | parts_used                               | labour_charge | status    |
++--------+------------+-------------+---------+------------+-----------------------------+-----------------------+------------------------------------------+---------------+-----------+
+| 14     | 11         | 9           | 4       | 2026-05-27 | Gear not working            | NULL                  | NULL                                     | 0.00          | Pending   |
+| 13     | 7          | 7           | 4       | 2026-05-27 | AC not working effieciently | AC filter replaced    | [{"part_id":2,"part_name":"Air Filter... | 350.00        | Completed |
+| 12     | 1          | 1           | 4       | 2026-05-27 | Gear Faulty                 | Clutch Plate Replaced | [{"part_id":7,"part_name":"Clutch Pla... | 200.00        | Completed |
+| 11     | 3          | 3           | 4       | 2026-05-27 | Gear not changing           | Clutch Replaced       | [{"part_id":7,"part_name":"Clutch Pla... | 200.00        | Completed |
+| 10     | 10         | 8           | 4       | 2026-05-27 | Transmission Fault          | Clutch Plate Replaced | [{"part_id":7,"part_name":"Clutch Pla... | 600.00        | Completed |
++--------+------------+-------------+---------+------------+-----------------------------+-----------------------+------------------------------------------+---------------+-----------+
+[2026-05-27 09:57:18] [SELECT] Table: service_job | Query: SELECT j.*, v.registration_no, v.make, v.model, c.full_name AS customer_name, u.full_name AS mechanic_name... | Params: None
+[2026-05-27 09:57:18] [SELECT] Table: vehicle | Query: SELECT vehicle_id, customer_id, registration_no, make, model FROM vehicle ORDER BY registration_no ASC... | Params: None
+[2026-05-27 09:57:18] [SELECT] Table: customer | Query: SELECT customer_id, full_name, phone FROM customer ORDER BY full_name ASC... | Params: None
+[2026-05-27 09:57:18] [SELECT] Table: user | Query: SELECT user_id, full_name FROM `user` WHERE role = 'mechanic' ORDER BY full_name ASC... | Params: None
+[2026-05-27 09:57:28] [SELECT] Table: user | Query: SELECT user_id, username, role, full_name FROM user WHERE username = %s AND password = %s... | Params: ('mechanic1', 'password')
+[2026-05-27 09:57:28] [SELECT] Table: service_job | Query: SELECT j.*, v.registration_no, v.make, v.model, c.full_name AS customer_name, u.full_name AS mechanic_name... | Params: (4,)
+[2026-05-27 09:57:28] [SELECT] Table: vehicle | Query: SELECT vehicle_id, customer_id, registration_no, make, model FROM vehicle ORDER BY registration_no ASC... | Params: None
+[2026-05-27 09:57:28] [SELECT] Table: customer | Query: SELECT customer_id, full_name, phone FROM customer ORDER BY full_name ASC... | Params: None
+[2026-05-27 09:57:28] [SELECT] Table: user | Query: SELECT user_id, full_name FROM `user` WHERE role = 'mechanic' ORDER BY full_name ASC... | Params: None
+[2026-05-27 09:57:39] [SELECT] Table: service_job | Query: SELECT j.*, v.registration_no, v.make, v.model, v.mileage, v.manufacture_year, c.full_name AS customer_name, c.phone AS customer_phone, u.full_name AS mechanic_name... | Params: (14,)
+[2026-05-27 09:57:39] [SELECT] Table: spare_part | Query: SELECT part_id, part_name, quantity_in_stock, selling_price, part_number FROM spare_part ORDER BY part_name ASC... | Params: None
+[2026-05-27 09:58:06] [SELECT] Table: service_job | Query: SELECT * FROM service_job WHERE job_id = %s... | Params: (14,)
+
+============================================================
+[TIMESTAMP] 2026-05-27 09:58:06
+[ACTION]    START TRANSACTION
+[TABLE]     NONE
+
+[QUERY]
+START TRANSACTION
+
+[STATUS]    SUCCESS
+============================================================
+
+[2026-05-27 09:58:06] [SELECT] Table: invoice | Query: SELECT invoice_id FROM invoice WHERE job_id = %s... | Params: (14,)
+[2026-05-27 09:58:06] [SELECT] Table: spare_part | Query: SELECT quantity_in_stock, selling_price, part_name FROM spare_part WHERE part_id = %s FOR UPDATE... | Params: (7,)
+
+============================================================
+[TIMESTAMP] 2026-05-27 09:58:06
+[ACTION]    UPDATE (TRANSACTION)
+[TABLE]     spare_part
+
+[QUERY]
+UPDATE spare_part SET quantity_in_stock = quantity_in_stock - %s WHERE part_id = %s
+
+[PARAMS]
+(1, 7)
+
+[STATUS]    SUCCESS
+============================================================
+
+
+============================================================
+[TIMESTAMP] 2026-05-27 09:58:06
+[ACTION]    UPDATE (TRANSACTION)
+[TABLE]     service_job
+
+[QUERY]
+UPDATE service_job 
+                   SET status = 'Completed', diagnosis = %s, parts_used = %s, labour_charge = %s 
+                   WHERE job_id = %s
+
+[PARAMS]
+('Clutch Replaced', '[{"part_id":7,"part_name":"Clutch Plate","quantity":1,"unit_price":3400,"line_total":3400}]', 0.0, 14)
+
+[STATUS]    SUCCESS
+============================================================
+
+
+============================================================
+[TIMESTAMP] 2026-05-27 09:58:06
+[ACTION]    INSERT (TRANSACTION)
+[TABLE]     invoice
+
+[QUERY]
+INSERT INTO invoice (job_id, customer_id, invoice_date, labour_total, parts_total, grand_total, payment_status, payment_method)
+                   VALUES (%s, %s, CURDATE(), %s, %s, %s, 'Unpaid', 'Cash')
+
+[PARAMS]
+(14, 9, 0.0, 3400.0, 3400.0)
+
+[STATUS]    SUCCESS
+============================================================
+
+
+============================================================
+[TIMESTAMP] 2026-05-27 09:58:06
+[ACTION]    COMMIT
+[TABLE]     NONE
+
+[QUERY]
+COMMIT TRANSACTION
+
+[STATUS]    SUCCESS
+============================================================
+
+
+[UPDATED TABLE SNAPSHOT]
++---------+-------------+---------------+-------------+--------------+-------------------+---------------+-----------+---------------+
+| part_id | supplier_id | part_name     | part_number | category     | quantity_in_stock | reorder_level | unit_cost | selling_price |
++---------+-------------+---------------+-------------+--------------+-------------------+---------------+-----------+---------------+
+| 7       | 5           | Clutch Plate  | CP-8787     | Transmission | 3                 | 2             | 2500.00   | 3400.00       |
+| 6       | 4           | Battery 12V   | BT-5656     | Electrical   | 11                | 3             | 4200.00   | 5600.00       |
+| 5       | 3           | Coolant       | CL-9090     | Cooling      | 17                | 5             | 300.00    | 500.00        |
+| 4       | 2           | Spark Plug    | SP-4321     | Ignition     | 18                | 7             | 180.00    | 320.00        |
+| 3       | 2           | Brake Pad Set | BP-7788     | Brakes       | 12                | 5             | 1200.00   | 1750.00       |
++---------+-------------+---------------+-------------+--------------+-------------------+---------------+-----------+---------------+
+
+[UPDATED TABLE SNAPSHOT]
++--------+------------+-------------+---------+------------+-----------------------------+-----------------------+------------------------------------------+---------------+-----------+
+| job_id | vehicle_id | customer_id | user_id | job_date   | complaint                   | diagnosis             | parts_used                               | labour_charge | status    |
++--------+------------+-------------+---------+------------+-----------------------------+-----------------------+------------------------------------------+---------------+-----------+
+| 14     | 11         | 9           | 4       | 2026-05-27 | Gear not working            | Clutch Replaced       | [{"part_id":7,"part_name":"Clutch Pla... | 0.00          | Completed |
+| 13     | 7          | 7           | 4       | 2026-05-27 | AC not working effieciently | AC filter replaced    | [{"part_id":2,"part_name":"Air Filter... | 350.00        | Completed |
+| 12     | 1          | 1           | 4       | 2026-05-27 | Gear Faulty                 | Clutch Plate Replaced | [{"part_id":7,"part_name":"Clutch Pla... | 200.00        | Completed |
+| 11     | 3          | 3           | 4       | 2026-05-27 | Gear not changing           | Clutch Replaced       | [{"part_id":7,"part_name":"Clutch Pla... | 200.00        | Completed |
+| 10     | 10         | 8           | 4       | 2026-05-27 | Transmission Fault          | Clutch Plate Replaced | [{"part_id":7,"part_name":"Clutch Pla... | 600.00        | Completed |
++--------+------------+-------------+---------+------------+-----------------------------+-----------------------+------------------------------------------+---------------+-----------+
+
+[UPDATED TABLE SNAPSHOT]
++------------+--------+-------------+--------------+--------------+-------------+-------------+----------------+----------------+
+| invoice_id | job_id | customer_id | invoice_date | labour_total | parts_total | grand_total | payment_status | payment_method |
++------------+--------+-------------+--------------+--------------+-------------+-------------+----------------+----------------+
+| 14         | 14     | 9           | 2026-05-27   | 0.00         | 3400.00     | 3400.00     | Unpaid         | Cash           |
+| 13         | 13     | 7           | 2026-05-27   | 350.00       | 760.00      | 1110.00     | Paid           | Card           |
+| 12         | 12     | 1           | 2026-05-27   | 200.00       | 3400.00     | 3600.00     | Paid           | Cash           |
+| 11         | 11     | 3           | 2026-05-27   | 200.00       | 3400.00     | 3600.00     | Paid           | UPI            |
+| 10         | 10     | 8           | 2026-05-27   | 600.00       | 3400.00     | 4000.00     | Paid           | Cash           |
++------------+--------+-------------+--------------+--------------+-------------+-------------+----------------+----------------+
+[2026-05-27 09:58:06] [SELECT] Table: service_job | Query: SELECT j.*, v.registration_no, v.make, v.model, c.full_name AS customer_name, u.full_name AS mechanic_name... | Params: (4,)
+[2026-05-27 09:58:06] [SELECT] Table: vehicle | Query: SELECT vehicle_id, customer_id, registration_no, make, model FROM vehicle ORDER BY registration_no ASC... | Params: None
+[2026-05-27 09:58:06] [SELECT] Table: customer | Query: SELECT customer_id, full_name, phone FROM customer ORDER BY full_name ASC... | Params: None
+[2026-05-27 09:58:06] [SELECT] Table: user | Query: SELECT user_id, full_name FROM `user` WHERE role = 'mechanic' ORDER BY full_name ASC... | Params: None
+[2026-05-27 09:58:13] [SELECT] Table: user | Query: SELECT user_id, username, role, full_name FROM user WHERE username = %s AND password = %s... | Params: ('owner1', 'password')
+[2026-05-27 09:58:13] [SELECT] Table: service_job | Query: SELECT COUNT(*) AS active_jobs FROM service_job WHERE status IN ('Pending', 'In Progress')... | Params: None
+[2026-05-27 09:58:13] [SELECT] Table: spare_part | Query: SELECT COUNT(*) AS low_stock_count FROM spare_part WHERE quantity_in_stock <= reorder_level... | Params: None
+[2026-05-27 09:58:13] [SELECT] Table: invoice | Query: SELECT COALESCE(SUM(grand_total), 0.00) AS unpaid_invoices FROM invoice WHERE payment_status = 'Unpaid'... | Params: None
+[2026-05-27 09:58:13] [SELECT] Table: service_job | Query: SELECT j.job_id, j.job_date, j.status, j.labour_charge, j.complaint,... | Params: None
+[2026-05-27 09:58:13] [SELECT] Table: spare_part | Query: SELECT part_name, quantity_in_stock, reorder_level, category... | Params: None
+[2026-05-27 09:58:13] [SELECT] Table: invoice | Query: SELECT DATE_FORMAT(invoice_date, '%b %Y') AS month_name, SUM(grand_total) AS total_revenue... | Params: None
+[2026-05-27 09:58:13] [SELECT] Table: service_job | Query: SELECT status, COUNT(*) AS job_count ... | Params: None
+[2026-05-27 09:58:16] [SELECT] Table: service_job | Query: SELECT j.*, v.registration_no, v.make, v.model, c.full_name AS customer_name, u.full_name AS mechanic_name... | Params: None
+[2026-05-27 09:58:16] [SELECT] Table: vehicle | Query: SELECT vehicle_id, customer_id, registration_no, make, model FROM vehicle ORDER BY registration_no ASC... | Params: None
+[2026-05-27 09:58:16] [SELECT] Table: customer | Query: SELECT customer_id, full_name, phone FROM customer ORDER BY full_name ASC... | Params: None
+[2026-05-27 09:58:16] [SELECT] Table: user | Query: SELECT user_id, full_name FROM `user` WHERE role = 'mechanic' ORDER BY full_name ASC... | Params: None
+[2026-05-27 09:58:22] [SELECT] Table: invoice | Query: SELECT i.*, c.full_name AS customer_name, c.phone AS customer_phone,... | Params: None
+
+============================================================
+[TIMESTAMP] 2026-05-27 09:58:34
+[ACTION]    UPDATE
+[TABLE]     invoice
+
+[QUERY]
+UPDATE invoice 
+        SET payment_status = %s, payment_method = %s 
+        WHERE invoice_id = %s;
+
+[PARAMS]
+('Paid', 'UPI', 14)
+
+[STATUS]    SUCCESS
+============================================================
+
+
+[UPDATED TABLE SNAPSHOT]
++------------+--------+-------------+--------------+--------------+-------------+-------------+----------------+----------------+
+| invoice_id | job_id | customer_id | invoice_date | labour_total | parts_total | grand_total | payment_status | payment_method |
++------------+--------+-------------+--------------+--------------+-------------+-------------+----------------+----------------+
+| 14         | 14     | 9           | 2026-05-27   | 0.00         | 3400.00     | 3400.00     | Paid           | UPI            |
+| 13         | 13     | 7           | 2026-05-27   | 350.00       | 760.00      | 1110.00     | Paid           | Card           |
+| 12         | 12     | 1           | 2026-05-27   | 200.00       | 3400.00     | 3600.00     | Paid           | Cash           |
+| 11         | 11     | 3           | 2026-05-27   | 200.00       | 3400.00     | 3600.00     | Paid           | UPI            |
+| 10         | 10     | 8           | 2026-05-27   | 600.00       | 3400.00     | 4000.00     | Paid           | Cash           |
++------------+--------+-------------+--------------+--------------+-------------+-------------+----------------+----------------+
+[2026-05-27 09:58:34] [SELECT] Table: invoice | Query: SELECT i.*, c.full_name AS customer_name, c.phone AS customer_phone,... | Params: None
+[2026-05-27 09:58:41] [SELECT] Table: invoice | Query: SELECT i.*, c.full_name AS customer_name, c.phone AS customer_phone, c.email AS customer_email, c.address AS customer_address,... | Params: (14,)
+[2026-06-03 10:54:24] [SELECT] Table: user | Query: SELECT user_id, username, role, full_name FROM user WHERE username = %s AND password = %s... | Params: ('owner1', 'password')
+[2026-06-03 10:54:24] [SELECT] Table: service_job | Query: SELECT COUNT(*) AS active_jobs FROM service_job WHERE status IN ('Pending', 'In Progress')... | Params: None
+[2026-06-03 10:54:24] [SELECT] Table: spare_part | Query: SELECT COUNT(*) AS low_stock_count FROM spare_part WHERE quantity_in_stock <= reorder_level... | Params: None
+[2026-06-03 10:54:24] [SELECT] Table: invoice | Query: SELECT COALESCE(SUM(grand_total), 0.00) AS unpaid_invoices FROM invoice WHERE payment_status = 'Unpaid'... | Params: None
+[2026-06-03 10:54:24] [SELECT] Table: service_job | Query: SELECT j.job_id, j.job_date, j.status, j.labour_charge, j.complaint,... | Params: None
+[2026-06-03 10:54:24] [SELECT] Table: spare_part | Query: SELECT part_name, quantity_in_stock, reorder_level, category... | Params: None
+[2026-06-03 10:54:24] [SELECT] Table: invoice | Query: SELECT DATE_FORMAT(invoice_date, '%b %Y') AS month_name, SUM(grand_total) AS total_revenue... | Params: None
+[2026-06-03 10:54:24] [SELECT] Table: service_job | Query: SELECT status, COUNT(*) AS job_count ... | Params: None
+[2026-06-03 10:54:33] [SELECT] Table: customer | Query: SELECT * FROM customer ORDER BY full_name ASC... | Params: None
+[2026-06-03 10:54:33] [SELECT] Table: vehicle | Query: SELECT v.*, c.full_name AS owner_name ... | Params: None
+[2026-06-03 10:54:33] [SELECT] Table: spare_part | Query: SELECT p.*, s.supplier_name ... | Params: None
+[2026-06-03 10:54:33] [SELECT] Table: supplier | Query: SELECT * FROM supplier ORDER BY supplier_name ASC... | Params: None

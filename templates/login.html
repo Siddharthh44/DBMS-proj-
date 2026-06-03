@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Fender Garage Management System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="d-flex align-items-center justify-content-center" style="min-height: 100vh; background-color: var(--bg-global);">
+
+    <div class="login-card-container text-center w-100 mx-3">
+        <div class="mb-4">
+            <h1 class="brand-title"><i class="bi bi-wrench-adjustable-circle text-primary me-2"></i>FENDER</h1>
+            <p class="text-secondary small mt-1">Automobile Garage Management System</p>
+        </div>
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show small text-start py-2 px-3 border-0" role="alert" style="border-radius: 6px;">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="padding: 0.75rem 1rem;"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('auth.login') }}" method="POST" class="text-start">
+            <div class="mb-3">
+                <label for="username" class="form-label form-label-fender">Username</label>
+                <input type="text" class="form-control form-control-fender" id="username" name="username" placeholder="e.g. manager1" required autofocus autocomplete="off">
+            </div>
+            
+            <div class="mb-4">
+                <label for="password" class="form-label form-label-fender">Password</label>
+                <input type="password" class="form-control form-control-fender" id="password" name="password" placeholder="••••••••" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100 py-2" style="border-radius: 6px; font-weight: 600;">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+            </button>
+        </form>
+        
+        <div class="mt-4 pt-3 border-top border-secondary-subtle">
+            <div class="quick-login-grid mb-4">
+
+                <button type="button"
+                        class="btn quick-login-btn admin-btn"
+                        onclick="fillLogin('owner1', 'password')">
+                    <i class="bi bi-shield-lock-fill me-2"></i>
+                    Admin
+                </button>
+
+                <button type="button"
+                        class="btn quick-login-btn manager-btn"
+                        onclick="fillLogin('manager1', 'password')">
+                    <i class="bi bi-briefcase-fill me-2"></i>
+                    Manager
+                </button>
+
+                <button type="button"
+                        class="btn quick-login-btn receptionist-btn"
+                        onclick="fillLogin('reception1', 'password')">
+                    <i class="bi bi-person-badge-fill me-2"></i>
+                    Receptionist
+                </button>
+
+                <button type="button"
+                        class="btn quick-login-btn mechanic-btn"
+                        onclick="fillLogin('mechanic1', 'password')">
+                    <i class="bi bi-tools me-2"></i>
+                    Mechanic
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function fillLogin(username, password) {
+        document.getElementById('username').value = username;
+        document.getElementById('password').value = password;
+    }
+</script>
+</body>
+</html>

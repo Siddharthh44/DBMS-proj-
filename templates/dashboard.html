@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Fender Garage{% endblock %}
+{% block header_title %}Workshop Dashboard{% endblock %}
+
+{% block content %}
+<!-- KPI Stats Row -->
+<div class="row">
+    <!-- Stat 1: Monthly Revenue -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card-db border-success-custom">
+            <div class="stat-label">Revenue (Current Month)</div>
+            <div class="stat-value">₹{{ "{:,.2f}".format(monthly_revenue) }}</div>
+            <div class="stat-icon text-success"><i class="bi bi-currency-rupee"></i></div>
+        </div>
+    </div>
+    
+    <!-- Stat 2: Active Jobs -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card-db border-primary-custom">
+            <div class="stat-label">Active Service Jobs</div>
+            <div class="stat-value">{{ active_jobs_count }}</div>
+            <div class="stat-icon text-primary"><i class="bi bi-gear-fill"></i></div>
+        </div>
+    </div>
+
+    <!-- Stat 3: Low Stock Warnings -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card-db border-danger-custom">
+            <div class="stat-label">Low Stock Spare Parts</div>
+            <div class="stat-value">{{ low_stock_count }}</div>
+            <div class="stat-icon text-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        </div>
+    </div>
+
+    <!-- Stat 4: Unpaid Invoices Total -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card-db border-warning-custom">
+            <div class="stat-label">Unpaid Billings Balance</div>
+            <div class="stat-value">₹{{ "{:,.2f}".format(unpaid_invoices) }}</div>
+            <div class="stat-icon text-warning"><i class="bi bi-receipt-cutoff"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row mb-4">
+    <div class="col-lg-8 mb-4">
+        <div class="card-db h-100">
+            <h3 class="fs-6 fw-bold mb-3"><i class="bi bi-bar-chart-fill text-primary me-2"></i>Revenue Analytics</h3>
+            <div style="position: relative; height: 300px;">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-4">
+        <div class="card-db h-100">
+            <h3 class="fs-6 fw-bold mb-3"><i class="bi bi-pie-chart-fill text-primary me-2"></i>Job Distribution</h3>
+            <div style="position: relative; height: 300px;">
+                <canvas id="jobStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Jobs & Stock Warnings Tables -->
+<div class="row">
+    <!-- Recent Jobs Table -->
+    <div class="col-xl-8 col-lg-7 mb-4">
+        <div class="card-db h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="fs-6 fw-bold mb-0"><i class="bi bi-clock-history text-primary me-2"></i>Recent Service Jobs</h3>
+                <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-sm btn-outline-primary px-3" style="border-radius: 6px;">View All</a>
+            </div>
+            
+            {% if recent_jobs %}
+            <div class="table-responsive">
+                <table class="table table-dark table-hover table-fender mb-0 text-nowrap">
+                    <thead>
+                        <tr>
+                            <th>Job ID</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Vehicle</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for job in recent_jobs %}
+                        <tr>
+                            <td>#{{ job.job_id }}</td>
+                            <td>{{ job.job_date }}</td>
+                            <td>{{ job.customer_name }}</td>
+                            <td>{{ job.make }} {{ job.model }} ({{ job.registration_no }})</td>
+                            <td>
+                                {% if job.status == 'Pending' %}
+                                    <span class="badge-status status-pending">Pending</span>
+                                {% elif job.status == 'In Progress' %}
+                                    <span class="badge-status status-progress">In Progress</span>
+                                {% elif job.status == 'Completed' %}
+                                    <span class="badge-status status-completed">Completed</span>
+                                {% else %}
+                                    <span class="badge-status status-cancelled">Cancelled</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('jobs.edit_job', job_id=job.job_id) }}" class="btn btn-sm btn-outline-light py-1 px-2" style="border-radius: 4px;">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-secondary text-center my-5">No service jobs created yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Low Stock Inventory Alerts -->
+    <div class="col-xl-4 col-lg-5 mb-4">
+        <div class="card-db h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="fs-6 fw-bold mb-0"><i class="bi bi-box-seam-fill text-danger me-2"></i>Low Stock Alerts</h3>
+                {% if session.get('role') in ['owner', 'manager'] %}
+                <a href="{{ url_for('inventory.list_inventory') }}" class="btn btn-sm btn-outline-danger px-3" style="border-radius: 6px;">Manage Stock</a>
+                {% endif %}
+            </div>
+            
+            {% if low_stock_items %}
+            <ul class="list-group list-group-flush" style="background: transparent;">
+                {% for item in low_stock_items %}
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3" style="background: transparent; border-bottom: 1px solid var(--border-color); color: var(--text-primary);">
+                    <div>
+                        <div class="fw-semibold">{{ item.part_name }}</div>
+                        <div class="small text-secondary">{{ item.category }}</div>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-danger rounded-pill px-2.5 py-1.5" style="font-size: 0.75rem;">
+                            {{ item.quantity_in_stock }} in stock
+                        </span>
+                        <div class="small text-secondary mt-1" style="font-size: 0.7rem;">Reorder at: {{ item.reorder_level }}</div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="text-center my-5">
+                <i class="bi bi-check-circle-fill text-success fs-2 mb-2 d-block"></i>
+                <p class="text-secondary mb-0">All spare parts stock levels are normal.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Parse data embedded from Flask
+        const revenueLabels = JSON.parse('{{ (revenue_labels or []) | tojson | safe }}');
+        const revenueData = JSON.parse('{{ (revenue_data or []) | tojson | safe }}');
+        const jobLabels = JSON.parse('{{ (job_labels or []) | tojson | safe }}');
+        const jobData = JSON.parse('{{ (job_data or []) | tojson | safe }}');
+
+        // 1. Revenue Chart (Bar & Line Combo)
+        const ctxRevenue = document.getElementById('revenueChart').getContext('2d');
+        new Chart(ctxRevenue, {
+            type: 'bar',
+            data: {
+                labels: revenueLabels.length > 0 ? revenueLabels : ["No Invoices Yet"],
+                datasets: [{
+                    label: 'Monthly Earnings (₹)',
+                    data: revenueData.length > 0 ? revenueData : [0],
+                    backgroundColor: '#3b82f6',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    barThickness: 30
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: '#2d2d2d' },
+                        ticks: { color: '#8a8a8a' }
+                    },
+                    y: {
+                        grid: { color: '#2d2d2d' },
+                        ticks: { color: '#8a8a8a' }
+                    }
+                }
+            }
+        });
+
+        // 2. Job Status Distribution Chart (Doughnut)
+        const ctxJob = document.getElementById('jobStatusChart').getContext('2d');
+        new Chart(ctxJob, {
+            type: 'doughnut',
+            data: {
+                labels: jobLabels.length > 0 ? jobLabels : ["No Service Jobs"],
+                datasets: [{
+                    data: jobData.length > 0 ? jobData : [1],
+                    backgroundColor: jobData.length > 0 ? ['#10b981', '#f59e0b', '#06b6d4', '#ef4444'] : ['#2d2d2d'],
+                    borderWidth: 1,
+                    borderColor: '#1e1e1e'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#8a8a8a',
+                            boxWidth: 12,
+                            padding: 15
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    });
+</script>
+{% endblock %}
